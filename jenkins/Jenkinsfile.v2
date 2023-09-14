@@ -1,0 +1,30 @@
+node {
+  def commit_id
+  stage('preparation') {
+    checkout scm
+    sh 'git rev-parse --short HEAD > .git/commit-id'
+    commit_id = readFile('.git/commit-id').trim()
+  }
+  stage('test') {
+    def myTestContainer = docker.image('node:lts')
+    myTestContainer.pull()
+    myTestContainer.inside {
+      sh 'npm install'
+      sh 'npm run test'
+    }
+  }
+  stage('test with a DB') {
+    def mysql = docker.image('mysql').run('-e MYSQL_ALLOW_EMPTY_PASSWORD=yes')
+    def myTestContainer = docker.image('node:lts')
+    myTestContainer.pull()
+    myTestContainer.inside ('--link ${mysql.id}:mysql') {
+      sh 'npm install'
+      sh 'npm run test'
+    }
+  }
+  stage('docker build/push') {
+    docker.withRegistry('https://index.docker.io/v2/', 'dockerhub' /* id of credential */) {
+      def app = docker.build('wtchrs/docker-nodejs-example:${commit_id}', '.' /* path to build */).push()
+    }
+  }
+}
