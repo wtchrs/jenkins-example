@@ -13,7 +13,7 @@ node {
   }
   stage('docker build/push') {
     docker.withRegistry('https://index.docker.io/v2/', 'dockerhub' /* id of credential */) {
-      def app = docker.build('wtchrs/docker-nodejs-example:${commit_id}', '.' /* path to build */).push()
+      def app = docker.build("wtchrs/docker-nodejs-example:${commit_id}", '.' /* path to build */).push()
     }
   }
 }

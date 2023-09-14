@@ -14,17 +14,17 @@ node {
     }
   }
   stage('test with a DB') {
-    def mysql = docker.image('mysql').run('-e MYSQL_ALLOW_EMPTY_PASSWORD=yes')
+    def mysql = docker.image('mysql').run('-e MYSQL_ALLOW_EMPTY_PASSWORD=yes --rm')
     def myTestContainer = docker.image('node:lts')
     myTestContainer.pull()
-    myTestContainer.inside ('--link ${mysql.id}:mysql') {
+    myTestContainer.inside ("--link ${mysql.id}:mysql") {
       sh 'npm install'
       sh 'npm run test'
     }
   }
   stage('docker build/push') {
     docker.withRegistry('https://index.docker.io/v2/', 'dockerhub' /* id of credential */) {
-      def app = docker.build('wtchrs/docker-nodejs-example:${commit_id}', '.' /* path to build */).push()
+      def app = docker.build("wtchrs/docker-nodejs-example:${commit_id}", '.' /* path to build */).push()
     }
   }
 }
